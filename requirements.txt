@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+websockets
+openai
+python-dotenv
+faster-whisper
+kokoro-onnx
+soundfile
+onnxruntime
+numpy
+huggingface_hub

@@ -1,0 +1,31 @@
+# Environment variables (Sensitive API Keys)
+.env
+
+# Local Databases and dynamic state
+data/
+*.db
+*.sqlite
+
+# Cached Models (Local Whisper / Kokoro voice models)
+models/
+
+# Python caching & environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+env/
+venv/
+
+# Frontend builds and package caches
+frontend/node_modules/
+frontend/dist/
+node_modules/
+dist/
+.oxlintrc.json
+
+# Operating System files
+.DS_Store
+Thumbs.db
