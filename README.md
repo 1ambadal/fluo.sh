@@ -1,4 +1,4 @@
-# 🍃 Fluō (fluo.sh)
+# Fluo.sh
 
 A minimalist, voice-first AI language learner designed for natural, real-time conversations. **Fluō** listens, responds with lifelike voice streams, and provides non-intrusive, inline grammar corrections in real time.
 
