@@ -17,7 +17,7 @@ DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 LLM_MODEL = os.getenv("LLM_MODEL", "deepseek-chat")
 
 # STT Configuration (faster-whisper)
-WHISPER_MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "small.en")  # e.g. small.en, base.en, tiny.en
+WHISPER_MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "medium.en")  # e.g. medium.en, small.en, base.en
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")  # cpu or cuda
 WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")  # float32, float16, int8
 

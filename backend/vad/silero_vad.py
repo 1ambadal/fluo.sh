@@ -74,10 +74,8 @@ class VoiceActivityDetector:
                 self.speech_chunks_count += 1
                 if not self.is_speaking and self.speech_chunks_count >= self.min_speech_chunks:
                     self.is_speaking = True
-                    self.accumulated_speech.clear()
                     logger.info(f"[VAD] Speech START detected (prob={prob:.3f})")
-                if self.is_speaking:
-                    self.accumulated_speech.append(frame)
+                self.accumulated_speech.append(frame)
             else:
                 self.speech_chunks_count = 0
                 if self.is_speaking:
@@ -95,5 +93,7 @@ class VoiceActivityDetector:
 
                         logger.info(f"[VAD] Speech END — {len(full_speech)/16000:.2f}s captured (RMS={speech_rms:.4f}), sending to STT")
                         return full_speech
+                else:
+                    self.accumulated_speech.clear()
 
         return None
