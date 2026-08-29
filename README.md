@@ -1,165 +1,152 @@
-# Fluo
+# 🍃 Fluō (fluo.sh)
 
-**Speak. Get corrected. Get fluent.**
-
-An open-source, voice-first AI language learning app. Fluō listens, replies in natural streamed speech, and quietly surfaces grammar corrections alongside the conversation — without ever breaking the flow of talking.
-
-No lessons. No flashcards. Just conversation.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-18.2.0-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://react.dev)
+A minimalist, voice-first AI language learner designed for natural, real-time conversations. **Fluō** listens, responds with lifelike voice streams, and provides non-intrusive, inline grammar corrections in real time.
 
 ---
 
-## How it works
+## ⚡ Features
 
-1. **Tap to talk.** Silero VAD listens continuously and detects the moment you stop speaking — no manual stop, no fixed timers.
-2. **Kai replies, live.** The moment you finish a thought, transcription, LLM response, and voice synthesis all stream concurrently — you hear Kai start replying almost immediately, not after a full round-trip.
-3. **Corrections, without interruption.** A second, parallel model quietly grades what you said — grammar, agreement, word choice — and surfaces a compact inline diff (what you said vs. what a native speaker would say) right under your message. Kai never corrects you mid-conversation; that would kill the flow.
+* **Voice-First Loop**: Speak naturally. Voice Activity Detection (VAD) automatically segments your speech and begins processing immediately.
+* **Ultra-low Latency**: Powered by local STT (Faster-Whisper), fast TTS (Kokoro-ONNX), and DeepSeek LLM.
+* **Sleek, Minimalist Interface**: Purely content-focused dark mode design, fully responsive from desktop down to mobile viewports.
+* **Smart Feedback**: Interactive grammar corrections and suggestions for your spoken inputs.
 
 ---
 
-## Architecture
+## 🏗️ Architecture Flow
 
-Two things happen in parallel on every turn: the conversation keeps moving, and your grammar gets graded — independently, so neither one waits on the other.
+The diagram below shows how real-time audio streams, voice activation, and LLM processing orchestrate over WebSockets:
 
-\`\`\`mermaid
+```mermaid
 sequenceDiagram
-    autonumber
-    actor User as Student
-    participant FE as React Frontend
-    participant BE as FastAPI WebSocket
-    participant VAD as Silero VAD (ONNX)
-    participant STT as Whisper Engine
-    participant LLM as LLM (Chat & Feedback)
-    participant TTS as Kokoro TTS Engine
+    actor Student
+    participant Frontend as React Frontend
+    participant Backend as FastAPI Server
+    participant AI as DeepSeek LLM & Engines
 
-    User->>FE: Speaks into microphone
-    FE->>BE: Streams audio chunks (WebSocket)
-    BE->>VAD: Evaluates speech boundaries
-    Note over BE,VAD: Detects end of speech
-    BE->>STT: Transcribes buffered audio
-    STT-->>BE: Returns text
-    BE->>FE: Sends transcription
-
-    par Conversational reply
-        BE->>LLM: Requests reply (Pass 1)
-        LLM-->>BE: Streams tokens
-        BE->>TTS: Synthesizes speech per sentence
-        TTS-->>BE: Streams PCM audio
-        BE->>FE: Streams audio playback
-        FE-->>User: Plays reply, gapless
-    and Grammar feedback
-        BE->>LLM: Requests analysis (Pass 2)
-        LLM-->>BE: Structured JSON — mistakes + fix
-        BE->>FE: Pushes feedback payload
-    end
-\`\`\`
+    Student->>Frontend: Speaks into microphone
+    Frontend->>Backend: Streams raw audio chunks
+    Backend->>Backend: VAD detects end of speech
+    Backend->>AI: Transcribes audio (Whisper) & prompts LLM
+    AI-->>Backend: Streams conversational tokens & voice (Kokoro)
+    Backend->>Frontend: Streams speech text & synthesized audio
+    Frontend-->>Student: Plays synthesized audio response
+    Backend->>AI: Evaluates grammar in background
+    AI-->>Backend: Returns correction JSON
+    Backend->>Frontend: Updates UI with grammar feedback
+```
 
 ---
 
-## Stack
+## 🛠️ Technology Stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| VAD | Silero VAD (ONNX) | Tiny, fast, accurate speech-boundary detection — runs locally on CPU |
-| STT | faster-whisper (CTranslate2) | Near state-of-the-art transcription accuracy, runs locally on GPU |
-| TTS | kokoro-onnx | Small footprint, natural-sounding local voice synthesis |
-| LLM | Pluggable — Anthropic, OpenAI, DeepSeek, or local Ollama | Swap providers via `.env`, no code changes |
-| Backend | FastAPI + WebSockets + SQLite | Simple, fast, no unnecessary infra |
-| Frontend | React + Vite | Standard, fast dev loop |
+* **Frontend**: React, Vite, Lucide Icons, and Web Audio API queue.
+* **Backend**: FastAPI, WebSockets, SQLite database.
+* **VAD (Voice Activity Detection)**: Silero VAD `.onnx` running locally.
+* **STT (Speech-to-Text)**: `faster-whisper` (utilizing CTranslate2 for local inference).
+* **TTS (Text-to-Speech)**: `kokoro-onnx` local voice synthesis.
+* **LLM Engine**: DeepSeek (standard model: `deepseek-chat`).
 
-STT, TTS, and VAD run entirely on your machine. Only the two LLM calls (conversation + feedback) leave your device, and only if you're using a hosted provider — point `LLM_PROVIDER` at a local Ollama model to keep everything on-device.
+---
 
-## Quick Start (Docker)
+## 🚀 Quick Start (Docker)
 
-\`\`\`bash
+Docker Compose orchestrates the frontend static server, local Python dependencies, and caching folder mounts automatically.
+
+### 1. Configure Environment Variables
+
+Copy `.env.example` to `.env` in the root directory:
+
+```bash
 cp .env.example .env
-\`\`\`
+```
 
-Edit `.env` with your LLM provider of choice:
-\`\`\`env
-LLM_PROVIDER=anthropic
-LLM_MODEL=claude-sonnet-5
-ANTHROPIC_API_KEY=your_key_here
-\`\`\`
+Edit the `.env` file to specify your LLM credentials:
 
-Or run fully local with Ollama:
-\`\`\`env
-LLM_PROVIDER=ollama
-LLM_MODEL=llama3.1:8b-instruct-q4_K_M
-\`\`\`
+```env
+LLM_PROVIDER=deepseek
+LLM_MODEL=deepseek-chat
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+```
 
-Then:
-\`\`\`bash
+### 2. Start Services
+
+Run the following command to build and launch the application:
+
+```bash
 docker compose up -d --build
-\`\`\`
+```
 
-Open **http://localhost:5173**.
-
----
-
-## Local Development (without Docker)
-
-**Backend**
-\`\`\`bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r ../requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-\`\`\`
-
-**Frontend**
-\`\`\`bash
-cd frontend
-npm install
-npm run dev
-\`\`\`
-The frontend dev server proxies API/WebSocket calls to `http://localhost:8000` automatically.
+Access the web interface at: **[http://localhost:5173](http://localhost:5173)**.
 
 ---
 
-## Hardware notes
+## 💻 Local Development Setup (Non-Docker)
 
-Comfortable on an 8GB VRAM GPU:
-- `faster-whisper` (`large-v3-turbo`, int8) — ~4-5GB VRAM
-- `kokoro-onnx` — runs fine on CPU, near-zero GPU cost
-- If self-hosting the LLM too, `llama3.1:8b` (Q4_K_M) fits in the remaining headroom, though hosted API models (Claude, GPT, DeepSeek) give noticeably better conversational and grammar-feedback quality than any local 7-8B model today.
+If you prefer to run the components natively on your system for debugging, follow these steps:
+
+### Backend Setup
+
+1. **Create Virtual Environment**:
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   pip install -r ../requirements.txt
+   ```
+
+3. **Run Dev Server**:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+### Frontend Setup
+
+1. **Install Modules**:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start Dev Server**:
+   ```bash
+   npm run dev
+   ```
+
+The frontend proxy will automatically direct API/WebSocket calls to `http://localhost:8000`.
 
 ---
 
-## Directory Layout
+## 📂 Directory Layout
 
-\`\`\`
+```
 .
-├── backend/
-│   ├── db/          # SQLite schema & queries
-│   ├── llm/          # Conversation + feedback prompts, provider client
-│   ├── stt/          # Whisper wrapper
-│   ├── tts/          # Kokoro wrapper
-│   ├── vad/          # Silero VAD wrapper
-│   └── ws/           # WebSocket orchestration
-├── frontend/
-│   └── src/
-│       ├── audio/       # Gapless audio queue player
-│       ├── components/  # UI components
-│       ├── hooks/       # WebSocket lifecycle
-│       └── App.jsx
-├── docker-compose.yml
-└── README.md
-\`\`\`
+├── backend/                  # FastAPI WebSocket backend
+│   ├── db/                   # Local SQLite migration & queries
+│   ├── llm/                  # Conversation agents & grammar feedback system
+│   ├── stt/                  # Whisper transcription wrappers
+│   ├── tts/                  # Kokoro-onnx voice synthesis wrapper
+│   ├── vad/                  # Silero voice activity detection wrapper
+│   └── ws/                   # WebSocket connection orchestrator
+├── frontend/                 # React client application
+│   ├── src/                  # React components and custom hooks
+│   │   ├── audio/            # Gapless audio queue player hook
+│   │   ├── components/       # Interface component elements
+│   │   ├── hooks/            # WebSocket lifecycle controls
+│   │   ├── index.css         # Styling system & mobile media queries
+│   │   └── App.jsx           # Main workspace coordinator
+│   └── public/               # Favicon & vector assets
+├── docker-compose.yml        # Orchestration suite
+└── README.md                 # Project documentation
+```
 
 ---
 
-## Privacy
+## 📄 License
 
-- Speech recognition, voice activity detection, and voice synthesis all run locally — none of it touches a network call.
-- Only your transcribed text is sent to an LLM provider, and only if you're using a hosted one (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) — point `LLM_PROVIDER=ollama` to keep everything fully on-device.
-- No telemetry, no analytics, no third-party tracking.
-- `.env` and `data/` are gitignored — your keys and conversation history never leave your machine unintentionally.
-
-## License
-
-MIT — free to use, modify, and redistribute.
+This project is open-sourced under the **MIT License**. Feel free to use, modify, and distribute it.
